@@ -8,7 +8,10 @@
 // Joystick
 const int xPin = 0;
 const int yPin = 1;
-const int swPin = 6;
+const int swPin = 5;
+
+int x;
+int y;
 
 void setup() {
   // Joystick

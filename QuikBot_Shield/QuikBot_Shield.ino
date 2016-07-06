@@ -8,7 +8,7 @@
 // Joystick (delete when controller sketch is complete)
 const int xPin = 0;
 const int yPin = 1;
-const int swPin = 6;
+const int swPin = 5;
 
 // H-Bridge 1
 const int BRIDGE1_EN12 = 11;
