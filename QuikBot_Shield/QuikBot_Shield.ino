@@ -102,5 +102,9 @@ void updateDrivingMotors(int x, int y) {
 }
 
 void parseSerialData() {
-  
+  for (int i = 0; i < 8; i++) {
+    lastRead[i] = Serial.parseInt();
+    // [for testing purposes]
+    Serial.println(lastRead[0]);
+  }
 }
