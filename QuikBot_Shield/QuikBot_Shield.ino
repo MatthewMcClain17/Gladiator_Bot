@@ -4,6 +4,12 @@
  * Copyright 2016 Oakwood Robotics
  */
 
+// USER SETTINGS
+// Select the variable values that best suit your needs. (Ranges in parenthesis)
+
+const int deadzone = 170;
+// Sets the range of joystick values treated as neutral. (0 - 255)
+
 // PINS
 // Joystick (delete when controller sketch is complete)
 const int xPin = 0;
@@ -20,10 +26,27 @@ const int BRIDGE2_EN12 = 6;
 const int BRIDGE2_LEFT1 = 7;
 const int BRIDGE2_LEFT2 = 8;
 
-int deadzone = 170;
 
 int velocity;
 int motorDirection;
+
+int lastRead[8];
+/*  This array stores values from the last recieved serial transmission from the
+ *  controller in the following format:
+ *  
+ *  lastRead[0]: Joystick 1 X-axis position
+ *  lastRead[1]: Joystick 1 Y-axis position
+ *  lastRead[2]: Joystick 2 X-axis position
+ *  lastRead[3]: Joystick 2 Y-axis position
+ *  lastRead[4]: Button 1 state
+ *  lastRead[5]: Button 2 state
+ *  lastRead[6]: Button 3 state
+ *  lastRead[7]: Button 4 state
+ *  
+ *  Note that joystick position values range from 0-255 and button state values
+ *  should always be either 0 (if not pressed) or 1 (if pressed).
+ */
+
 
 void setup() {
   // Joystick (delete when controller sketch is complete)
@@ -39,9 +62,16 @@ void setup() {
   pinMode(BRIDGE2_EN12, OUTPUT);
   pinMode(BRIDGE2_LEFT1, OUTPUT);
   pinMode(BRIDGE2_LEFT2, OUTPUT);
+
+  // Begin serial communication
+  Serial.begin(9600);
 }
 
 void loop() {
+  if (Serial.available() > 0) { // if any incoming serial data is recieved
+    parseSerialData(); // decode the message and put the values in the lastRead array
+  }
+  
   updateDrivingMotors(analogRead(xPin), analogRead(yPin));
 }
 
@@ -69,4 +99,8 @@ void updateDrivingMotors(int x, int y) {
     digitalWrite(BRIDGE1_LEFT2, HIGH);
     analogWrite(BRIDGE1_EN12, velocity); // turn on H-Bridge
   }
+}
+
+void parseSerialData() {
+  
 }
