@@ -30,18 +30,20 @@ const int BRIDGE2_LEFT2 = 8;
 int velocity;
 int motorDirection;
 
-int lastRead[8];
+int lastRead[10];
 /*  This array stores values from the last recieved serial transmission from the
  *  controller in the following format:
  *  
- *  lastRead[0]: Joystick 1 X-axis position
- *  lastRead[1]: Joystick 1 Y-axis position
- *  lastRead[2]: Joystick 2 X-axis position
- *  lastRead[3]: Joystick 2 Y-axis position
- *  lastRead[4]: Button 1 state
- *  lastRead[5]: Button 2 state
- *  lastRead[6]: Button 3 state
- *  lastRead[7]: Button 4 state
+ *  lastRead[0]: Left Joystick X-axis position
+ *  lastRead[1]: Left Joystick Y-axis position
+ *  lastRead[2]: Left Joystick button state
+ *  lastRead[3]: Right Joystick X-axis position
+ *  lastRead[4]: Right Joystick Y-axis position
+ *  lastRead[5]: Right Joystick button state
+ *  lastRead[6]: Button 1 state
+ *  lastRead[7]: Button 2 state
+ *  lastRead[8]: Button 3 state
+ *  lastRead[9]: Button 4 state
  *  
  *  Note that joystick position values range from 0-255 and button state values
  *  should always be either 0 (if not pressed) or 1 (if pressed).
@@ -69,10 +71,11 @@ void setup() {
 
 void loop() {
   if (Serial.available() > 0) { // if any incoming serial data is recieved
-    parseSerialData(); // decode the message and put the values in the lastRead array
+    parseSerialData(); // decode the message and put the values in lastRead[]
   }
-  
-  updateDrivingMotors(analogRead(xPin), analogRead(yPin));
+
+  updateDrivingMotors(lastRead[0], lastRead[1]);
+  //updateDrivingMotors(analogRead(xPin), analogRead(yPin));
 }
 
 // FUNCTIONS
@@ -102,9 +105,9 @@ void updateDrivingMotors(int x, int y) {
 }
 
 void parseSerialData() {
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 10; i++) {
     lastRead[i] = Serial.parseInt();
     // [for testing purposes]
-    Serial.println(lastRead[0]);
+    Serial.println(lastRead[i]);
   }
 }
