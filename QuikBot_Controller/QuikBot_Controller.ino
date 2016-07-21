@@ -7,13 +7,9 @@
 // USER SETTINGS
 // Select the variable values that best suit your needs. (Ranges in parenthesis)
 
-const int debounce = 5;
+const int debounce = 5; // number of milliseconds to wait when debouncing buttons
 
-// VARIABLES
-int x;
-int y;
-
-int positions[10];
+byte positions[10];
 /*  This array stores values read from the joysticks and buttons on the
  *  controller in the following format:
  *  
@@ -76,11 +72,19 @@ void setup() {
 }
 
 void loop() {
-  //joystickTest();
-  buttonTest(button4);
-  
+  // Collect input data from joysticks and buttons, then put them into positions
+  // array
   updatePositions();
-  printPositions();
+  
+  // Write positions to serial monitor with begin transmission indicator (">>>")
+  Serial.print(">>>");
+  Serial.write(positions, 10);
+
+  // Testing functions - to delete
+  //joystickTest();
+  //buttonTest(button4);
+  //Serial.println();
+  //printPositions();
 }
 
 // FUNCTIONS
@@ -106,18 +110,7 @@ void updatePositions() {
   if (pressed(button4) == HIGH) positions[9] = 1; else positions[9] = 0;
 }
 
-void printPositions() {
-  // Prints all ten positions[] values to the serial monitor beginning with a
-  // colon, separated by commas, and concluding with a newline character.
-  Serial.print(':');
-  for (int i = 0; i < 10; i++) {
-    Serial.print(positions[i]);
-    Serial.print(',');
-  }
-  Serial.println();
-}
-
-bool pressed(int buttonPin) {
+bool pressed(int buttonPin) { // to do: rewrite so this is for single presses
   // Checks to see if a button connected to a specific pin (its parameter) has
   // been pressed. Includes a debounce for accuracy. Returns HIGH if pressed,
   // returns LOW if not pressed.
@@ -132,9 +125,20 @@ bool pressed(int buttonPin) {
 
 // Testing functions (can be deleted to save memory)
 
+void printPositions() {
+  // Prints all ten positions[] values to the serial monitor
+  for (int i = 0; i < 10; i++) {
+    Serial.print(positions[i]);
+    Serial.print(',');
+  }
+  Serial.println();
+}
+
 void joystickTest() {
-  x = analogRead(xPinLeft);
-  y = analogRead(yPinLeft);
+  // Prints the current analog value recieved from the joystick
+  // to do: add second joystick
+  int x = analogRead(xPinLeft);
+  int y = analogRead(yPinLeft);
   Serial.print("X: ");
   Serial.println(x);
   Serial.print("Y: ");
@@ -144,10 +148,12 @@ void joystickTest() {
 }
 
 void buttonTest(int buttonPin) {
+  // Prints "Button [number of button] pressed!" to serial monitor; button to
+  // test set with parameter, such as buttonTest(button1);
   if (pressed(buttonPin) == HIGH) {
     Serial.print("Button ");
     Serial.print(buttonPin);
-    Serial.println(" Pressed!");
+    Serial.println(" pressed!");
     delay(100);
   }
 }

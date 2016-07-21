@@ -30,7 +30,7 @@ const int BRIDGE2_LEFT2 = 8;
 int velocity;
 int motorDirection;
 
-int lastRead[10];
+byte lastRead[10]; // = {255,255,1,255,255,1,0,1,1}; [delete initializer soon]
 /*  This array stores values from the last recieved serial transmission from the
  *  controller in the following format:
  *  
@@ -67,15 +67,24 @@ void setup() {
 
   // Begin serial communication
   Serial.begin(9600);
+
+  //parseSerialData2(); // [testing, delete]
 }
 
 void loop() {
-  if (Serial.available() > 0) { // if any incoming serial data is recieved
+  if (Serial.available() >= 10) { // if any incoming serial data is recieved
     parseSerialData(); // decode the message and put the values in lastRead[]
   }
 
-  updateDrivingMotors(lastRead[0], lastRead[1]);
-  //updateDrivingMotors(analogRead(xPin), analogRead(yPin));
+  for (int n = 0; n < 10; n++) {
+    Serial.print(lastRead[n]);
+    Serial.print(", ");
+  }
+
+  delay(200);
+
+  // updateDrivingMotors(lastRead[0], lastRead[1]);
+  // updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), analogRead(yPin));
 }
 
 // FUNCTIONS
@@ -83,21 +92,26 @@ void loop() {
 void updateDrivingMotors(int x, int y) {
   // Reads input from joysticks and updates speed of motors connected to
   // H-Bridge 1 appropriately
+  // to do: Change values to reflect mapped 1-byte values recieved from serial
+  // to do: make the Y value do something
+  // to do: write a code that could actually make something move using this
+  // as a framework
   
   // determine direction
-  if (x > (512 - deadzone) && x < (512 + deadzone)) { // if joystick is near center
-    digitalWrite (BRIDGE1_EN12, LOW); // stop motor
+  if (x > (127.5 - deadzone) && x < (127.5 + deadzone)) { // if joystick is near center
+    digitalWrite(BRIDGE1_EN12, LOW); // stop motor
   }
-  else if (x >= (512 + deadzone)) { // if joystick is pushed right
-    velocity = map(x, (512 + deadzone), 1023, 0, 255);
-    
+  else if (x >= (127.5 + deadzone)) { // if joystick is pushed right
+    velocity = 127.5 + deadzone;
+
+    digitalWrite(BRIDGE1_EN12, LOW); // shut off H-Bridge
     digitalWrite(BRIDGE1_LEFT1, HIGH);
     digitalWrite(BRIDGE1_LEFT2, LOW);
     analogWrite(BRIDGE1_EN12, velocity); // turn on H-Bridge
   } else { // if joystick is pushed left
-    velocity = map(x, 0, (511 - deadzone), 255, 0);
-    digitalWrite(BRIDGE1_EN12, LOW); // shut off H-Bridge
+    velocity = 127.5 - deadzone;
     
+    digitalWrite(BRIDGE1_EN12, LOW); // shut off H-Bridge
     digitalWrite(BRIDGE1_LEFT1, LOW);
     digitalWrite(BRIDGE1_LEFT2, HIGH);
     analogWrite(BRIDGE1_EN12, velocity); // turn on H-Bridge
@@ -108,6 +122,17 @@ void parseSerialData() {
   for (int i = 0; i < 10; i++) {
     lastRead[i] = Serial.parseInt();
     // [for testing purposes]
+    //Serial.println(lastRead[i]);
+  }
+}
+
+void parseSerialData2() {
+  // Potential replacement for parseSerialData using Serial.readBytesUntil()
+  if (Serial.read() == '<') {
+    Serial.readBytesUntil('>', lastRead, 10);
+  }
+  
+  for (int i = 0; i <10; i++) { // [for testing purposes]
     Serial.println(lastRead[i]);
   }
 }
