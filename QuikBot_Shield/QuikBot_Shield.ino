@@ -4,6 +4,14 @@
  * Copyright 2016 Oakwood Robotics
  */
 
+#include <SoftwareSerial.h>
+
+SoftwareSerial Bluetooth(7, 8);
+// Creates a new serial port for communication via bluetooth module.
+// This makes it so the Arduino's serial port remains unblocked so bluetooth
+// and USB communication can take place simultaneously. Parameters: (RX, TX)
+
+
 // USER SETTINGS
 // Select the variable values that best suit your needs. (Ranges in parenthesis)
 
@@ -48,7 +56,7 @@ byte lastRead[10]; // = {255,255,1,255,255,1,0,1,1}; [delete initializer soon]
  *  Note that joystick position values range from 0-255 and button state values
  *  should always be either 0 (if not pressed) or 1 (if pressed).
  */
-
+//byte beginIndicator[3];
 
 void setup() {
   // Joystick (delete when controller sketch is complete)
@@ -72,19 +80,20 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available() >= 10) { // if any incoming serial data is recieved
-    parseSerialData(); // decode the message and put the values in lastRead[]
+  if (Serial.available() >= 11) { // if any incoming serial data is recieved
+    parseSerialData2(); // decode the message and put the values in lastRead[]
   }
-
+  //Bluetooth.print("Hello!");
+  /*
   for (int n = 0; n < 10; n++) {
-    Serial.print(lastRead[n]);
-    Serial.print(", ");
-  }
+    Bluetooth.print(lastRead[n]);
+    Bluetooth.print(", ");
+  }*/
 
-  delay(200);
+  //delay(200);
 
   // updateDrivingMotors(lastRead[0], lastRead[1]);
-  // updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), analogRead(yPin));
+  updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), analogRead(yPin));
 }
 
 // FUNCTIONS
@@ -128,11 +137,16 @@ void parseSerialData() {
 
 void parseSerialData2() {
   // Potential replacement for parseSerialData using Serial.readBytesUntil()
-  if (Serial.read() == '<') {
+
+  // Store first 3 bytes from serial monitor in beginIndicator
+  // Serial.readBytes(beginIndicator, 3);
+  if (Serial.read() == '>') {
     Serial.readBytesUntil('>', lastRead, 10);
   }
-  
+
+  /* for testing
   for (int i = 0; i <10; i++) { // [for testing purposes]
     Serial.println(lastRead[i]);
   }
+  */
 }

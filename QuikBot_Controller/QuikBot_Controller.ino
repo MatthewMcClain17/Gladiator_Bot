@@ -2,6 +2,8 @@
  * 
  * Written by Matthew McClain, Oakwood Robotics Co-President
  * Copyright 2016 Oakwood Robotics
+ * Slave module address: +ADDR:2016:3:220126
+ * Master module address: 
  */
 
 // USER SETTINGS
@@ -76,8 +78,8 @@ void loop() {
   // array
   updatePositions();
   
-  // Write positions to serial monitor with begin transmission indicator (">>>")
-  Serial.print(">>>");
+  // Write positions to serial monitor with header ('>')
+  Serial.write('>'); // Header
   Serial.write(positions, 10);
 
   // Testing functions - to delete
@@ -86,6 +88,8 @@ void loop() {
   //Serial.println();
   //printPositions();
 }
+
+
 
 // FUNCTIONS
 
