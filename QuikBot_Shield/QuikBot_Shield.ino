@@ -19,10 +19,10 @@ const int deadzone = 10;
 // Sets the range of joystick values treated as neutral. (0 - 255)
 
 // PINS
-// Joystick (delete when controller sketch is complete)
+/* Joystick (delete when controller sketch is complete)
 const int xPin = 0;
 const int yPin = 1;
-const int swPin = 5;
+const int swPin = 5; */
 
 // H-Bridge
 // to do: change variable names to HBRIDGE format
@@ -33,10 +33,10 @@ const int BRIDGE1_LEFT2 = 13;
 int velocity;
 int motorDirection;
 
-byte lastRead[10]; // = {255,255,1,255,255,1,0,1,1}; [delete initializer soon]
+byte lastRead[10];
 /*  This array stores values from the last recieved serial transmission from the
  *  controller in the following format:
- *  
+ *  // To do: move joystick button states to before axis positions
  *  lastRead[0]: Left Joystick X-axis position
  *  lastRead[1]: Left Joystick Y-axis position
  *  lastRead[2]: Left Joystick button state
@@ -53,9 +53,9 @@ byte lastRead[10]; // = {255,255,1,255,255,1,0,1,1}; [delete initializer soon]
  */
 
 void setup() {
-  // Joystick (delete when controller sketch is complete)
+  /* Joystick (delete when controller sketch is complete)
   pinMode(xPin, INPUT);
-  pinMode(yPin, OUTPUT);
+  pinMode(yPin, OUTPUT); */
   
   // H-Bridge
   pinMode(BRIDGE1_EN12, OUTPUT);
@@ -65,34 +65,26 @@ void setup() {
   // Begin serial communication
   Serial.begin(9600);
   Bluetooth.begin(9600);
-
-  //parseSerialData2(); // [testing, delete]
 }
 
 void loop() {
   // change below to 10
   if (Bluetooth.available() >= 11) { // if any incoming serial data is recieved
-    //parseSerialData();
-    parseSerialData2(); // decode the message and put the values in lastRead[]
+    parseSerialData(); // decode the message and put the values in lastRead[]
   }
-  
-  for (int i = 0; i <10; i++) { // [for testing purposes]
-    Serial.println(lastRead[i]);
-  }
-  delay(50);
-  
-  //delay(200);
 
-  // updateDrivingMotors(lastRead[0], lastRead[1]);
+  bluetoothTest();
+  
+  //delay(50); // Delay to slow transmission/action speed (possibly uneccessary
+
+  updateDrivingMotors(lastRead[0], lastRead[1]);
   // updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), analogRead(yPin));
 }
 
 // FUNCTIONS
 
 void updateDrivingMotors(int x, int y) {
-  // Reads input from joysticks and updates speed of motors connected to
-  // H-Bridge 1 appropriately
-  // to do: Change values to reflect mapped 1-byte values recieved from serial
+  // Updates the velocity of motors connected to H-Bridge 1
   // to do: make the Y value do something
   // to do: write a code that could actually make something move using this
   // as a framework
@@ -119,34 +111,24 @@ void updateDrivingMotors(int x, int y) {
 }
 
 void parseSerialData() {
-  for (int i = 0; i < 10; i++) {
-    lastRead[i] = Bluetooth.parseInt();
-  }
-}
-
-void parseSerialData2() {
   // Potential replacement for parseSerialData using Serial.readBytesUntil()
 
   if (Bluetooth.read() == '>') {
     Bluetooth.readBytesUntil('>', lastRead, 10);
   }
-
-  /* for testing
-  for (int i = 0; i <10; i++) { // [for testing purposes]
-    Serial.println(lastRead[i]);
-  }
-  */
 }
 
 
 // Testing functions (can be deleted to save memory)
 
 void bluetoothTest() {
-  // Print collected data to computer's serial monitor
-  Serial.print('<');
-  for (int n = 0; n < 10; n++) {
-    Serial.print(lastRead[n]);
-    Serial.print(", ");
+  // Print collected data to computer serial monitor
+  Serial.print('>');
+  for (int i = 0; i < 10; i++) {
+    Serial.print(lastRead[i]);
+    if (i < 9) {
+      Serial.print(", ");
+    }
   }
-  Serial.println('>');
+  Serial.println();
 }
