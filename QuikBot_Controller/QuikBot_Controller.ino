@@ -6,6 +6,14 @@
  * Master module address: 
  */
 
+#include <SoftwareSerial.h>
+
+SoftwareSerial Bluetooth(12, 13);
+// Creates a new serial port for communication via bluetooth module.
+// This makes it so the Arduino's serial port remains unblocked so bluetooth
+// and USB communication can take place simultaneously. Parameters: (RX, TX)
+// To do: change to lower pins so as not to accidentally turn on onboard LED
+
 // USER SETTINGS
 // Select the variable values that best suit your needs. (Ranges in parenthesis)
 
@@ -14,7 +22,7 @@ const int debounce = 5; // number of milliseconds to wait when debouncing button
 byte positions[10];
 /*  This array stores values read from the joysticks and buttons on the
  *  controller in the following format:
- *  
+ *  // To do: move joystick button states to before axis positions
  *  lastRead[0]: Left Joystick X-axis position
  *  lastRead[1]: Left Joystick Y-axis position
  *  lastRead[2]: Left Joystick button state
@@ -71,22 +79,15 @@ void setup() {
 
   
   Serial.begin(9600); // Begin serial communication at a baud rate of 9600
+  Bluetooth.begin(9600);
 }
 
 void loop() {
-  // Collect input data from joysticks and buttons, then put them into positions
-  // array
+  // Collect input data from joysticks and buttons, then store in positions array
   updatePositions();
-  
-  // Write positions to serial monitor with header ('>')
-  Serial.write('>'); // Header
-  Serial.write(positions, 10);
 
   // Testing functions - to delete
-  //joystickTest();
-  //buttonTest(button4);
-  //Serial.println();
-  //printPositions();
+  bluetoothTest(positions);
 }
 
 
@@ -160,4 +161,23 @@ void buttonTest(int buttonPin) {
     Serial.println(" pressed!");
     delay(100);
   }
+}
+
+void bluetoothTest(byte data[10]) {
+  // Writes any ten-byte array to the bluetooth serial port
+  /*
+  for (int i = 0; i < 10; i++) {
+    data[i] = 1;
+  }*/
+  Bluetooth.print('>');
+  Bluetooth.write(data, 10);
+  delay(50);
+
+  /*
+  for (int i = 0; i < 10; i++) {
+    data[i] = 0;
+  }
+  Bluetooth.print('>');
+  Bluetooth.write(data, 10);
+  delay(200);*/
 }
