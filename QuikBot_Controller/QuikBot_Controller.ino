@@ -6,6 +6,13 @@
  * Master module address: 
  */
 
+#include <SoftwareSerial.h>
+
+SoftwareSerial Bluetooth(12, 13);
+// Creates a new serial port for communication via bluetooth module.
+// This makes it so the Arduino's serial port remains unblocked so bluetooth
+// and USB communication can take place simultaneously. Parameters: (RX, TX)
+
 // USER SETTINGS
 // Select the variable values that best suit your needs. (Ranges in parenthesis)
 
@@ -71,6 +78,7 @@ void setup() {
 
   
   Serial.begin(9600); // Begin serial communication at a baud rate of 9600
+  Bluetooth.begin(9600);
 }
 
 void loop() {
@@ -79,7 +87,7 @@ void loop() {
   updatePositions();
   
   // Write positions to serial monitor with header ('>')
-  Serial.write('>'); // Header
+  Serial.print('>'); // Header
   Serial.write(positions, 10);
 
   // Testing functions - to delete
