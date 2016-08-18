@@ -36,13 +36,13 @@ int motorDirection;
 byte lastRead[10];
 /*  This array stores values from the last recieved serial transmission from the
  *  controller in the following format:
- *  // To do: move joystick button states to before axis positions
- *  lastRead[0]: Left Joystick X-axis position
- *  lastRead[1]: Left Joystick Y-axis position
- *  lastRead[2]: Left Joystick button state
- *  lastRead[3]: Right Joystick X-axis position
- *  lastRead[4]: Right Joystick Y-axis position
- *  lastRead[5]: Right Joystick button state
+ *  
+ *  lastRead[0]: Left Joystick button state
+ *  lastRead[1]: Left Joystick X-axis position
+ *  lastRead[2]: Left Joystick Y-axis position 
+ *  lastRead[3]: Right Joystick button state
+ *  lastRead[4]: Right Joystick X-axis position
+ *  lastRead[5]: Right Joystick Y-axis position
  *  lastRead[6]: Button 1 state
  *  lastRead[7]: Button 2 state
  *  lastRead[8]: Button 3 state
@@ -70,14 +70,14 @@ void setup() {
 void loop() {
   // change below to 10
   if (Bluetooth.available() >= 11) { // if any incoming serial data is recieved
-    parseSerialData(); // decode the message and put the values in lastRead[]
+    parseBluetoothData(); // decode the message and put the values in lastRead[]
   }
 
   bluetoothTest();
   
   //delay(50); // Delay to slow transmission/action speed (possibly uneccessary
 
-  updateDrivingMotors(lastRead[0], lastRead[1]);
+  updateDrivingMotors(lastRead[1], lastRead[2]);
   // updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), analogRead(yPin));
 }
 
@@ -110,11 +110,10 @@ void updateDrivingMotors(int x, int y) {
   }
 }
 
-void parseSerialData() {
-  // Potential replacement for parseSerialData using Serial.readBytesUntil()
-
-  if (Bluetooth.read() == '>') {
-    Bluetooth.readBytesUntil('>', lastRead, 10);
+void parseBluetoothData() {
+  // Store data recieved via bluetooth in the lastRead array
+  if (Bluetooth.read() == '>') { // if header character '>' is present
+    Bluetooth.readBytesUntil('>', lastRead, 10); // Store 10 bytes in lastRead
   }
 }
 
