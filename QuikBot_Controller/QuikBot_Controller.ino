@@ -22,13 +22,13 @@ const int debounce = 5; // number of milliseconds to wait when debouncing button
 byte positions[10];
 /*  This array stores values read from the joysticks and buttons on the
  *  controller in the following format:
- *  // To do: move joystick button states to before axis positions
- *  lastRead[0]: Left Joystick X-axis position
- *  lastRead[1]: Left Joystick Y-axis position
- *  lastRead[2]: Left Joystick button state
- *  lastRead[3]: Right Joystick X-axis position
- *  lastRead[4]: Right Joystick Y-axis position
- *  lastRead[5]: Right Joystick button state
+ *  
+ *  lastRead[0]: Left Joystick button state
+ *  lastRead[1]: Left Joystick X-axis position
+ *  lastRead[2]: Left Joystick Y-axis position 
+ *  lastRead[3]: Right Joystick button state
+ *  lastRead[4]: Right Joystick X-axis position
+ *  lastRead[5]: Right Joystick Y-axis position
  *  lastRead[6]: Button 1 state
  *  lastRead[7]: Button 2 state
  *  lastRead[8]: Button 3 state
@@ -99,14 +99,14 @@ void updatePositions() {
   // so they can fit in a single byte (0-255) and writes it to positions[].
   
   // Left joystick
-  positions[0] = map(analogRead(xPinLeft), 0, 1023, 0, 255);
-  positions[1] = map(analogRead(yPinLeft), 0, 1023, 0, 255);
-  if (pressed(joyButtonLeft) == HIGH) positions[2] = 1; else positions[2] = 0;
+  if (pressed(joyButtonLeft) == HIGH) positions[0] = 1; else positions[0] = 0;
+  positions[1] = map(analogRead(xPinLeft), 0, 1023, 0, 255);
+  positions[2] = map(analogRead(yPinLeft), 0, 1023, 0, 255);
 
   // Right joystick
-  positions[3] = map(analogRead(xPinRight), 0, 1023, 0, 255);
-  positions[4] = map(analogRead(yPinRight), 0, 1023, 0, 255);
-  if (pressed(joyButtonRight) == HIGH) positions[5] = 1; else positions[5] = 0;
+  if (pressed(joyButtonRight) == HIGH) positions[3] = 1; else positions[3] = 0;
+  positions[4] = map(analogRead(xPinRight), 0, 1023, 0, 255);
+  positions[5] = map(analogRead(yPinRight), 0, 1023, 0, 255);
 
   // Buttons
   if (pressed(button1) == HIGH) positions[6] = 1; else positions[6] = 0;
