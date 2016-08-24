@@ -19,16 +19,20 @@ const int deadzone = 10;
 // Sets the range of joystick values treated as neutral. (0 - 255)
 
 // PINS
-/* Joystick (delete when controller sketch is complete)
+// Joystick (delete when controller sketch is complete)
 const int xPin = 0;
 const int yPin = 1;
-const int swPin = 5; */
+const int swPin = 5;
 
 // H-Bridge
 // to do: change variable names to HBRIDGE format
-const int BRIDGE1_EN12 = 11;
-const int BRIDGE1_LEFT1 = 12;
-const int BRIDGE1_LEFT2 = 13;
+const int HBRIDGE_LEFT_EN = 11; // formerly BRIDGE_EN12
+const int HBRIDGE_LEFT1 = 12;
+const int HBRIDGE_LEFT2 = 13;
+
+const int HBRIDGE_RIGHT_EN = 6;
+const int HBRIDGE_RIGHT1 = 5;
+const int HBRIDGE_RIGHT2 = 4;
 
 int velocity;
 int motorDirection;
@@ -58,9 +62,13 @@ void setup() {
   pinMode(yPin, OUTPUT); */
   
   // H-Bridge
-  pinMode(BRIDGE1_EN12, OUTPUT);
-  pinMode(BRIDGE1_LEFT1, OUTPUT);
-  pinMode(BRIDGE1_LEFT2, OUTPUT);
+  pinMode(HBRIDGE_LEFT_EN, OUTPUT);
+  pinMode(HBRIDGE_LEFT1, OUTPUT);
+  pinMode(HBRIDGE_LEFT2, OUTPUT);
+
+  pinMode(HBRIDGE_RIGHT_EN, OUTPUT);
+  pinMode(HBRIDGE_RIGHT1, OUTPUT);
+  pinMode(HBRIDGE_RIGHT2, OUTPUT);
 
   // Begin serial communication
   Serial.begin(9600);
@@ -77,8 +85,8 @@ void loop() {
   
   //delay(50); // Delay to slow transmission/action speed (possibly uneccessary
 
-  updateDrivingMotors(lastRead[1], lastRead[2]);
-  // updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), analogRead(yPin));
+  //updateDrivingMotors(lastRead[1], lastRead[2]);
+  updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), map(analogRead(yPin), 0, 1023, 0, 255));
 }
 
 // FUNCTIONS
@@ -89,24 +97,47 @@ void updateDrivingMotors(int x, int y) {
   // to do: write a code that could actually make something move using this
   // as a framework
   
-  // determine direction
+  // Left motor: controlled by X-axis position
+  
   if (x > (127.5 - deadzone) && x < (127.5 + deadzone)) { // if joystick is near center
-    digitalWrite(BRIDGE1_EN12, LOW); // stop motor
+    digitalWrite(HBRIDGE_LEFT_EN, LOW); // stop motor
   }
   else if (x >= (127.5 + deadzone)) { // if joystick is pushed right
     velocity = map(x, (127.5 + deadzone), 255, 0, 255);
 
-    digitalWrite(BRIDGE1_EN12, LOW); // shut off H-Bridge
-    digitalWrite(BRIDGE1_LEFT1, HIGH);
-    digitalWrite(BRIDGE1_LEFT2, LOW);
-    analogWrite(BRIDGE1_EN12, velocity); // turn on H-Bridge
-  } else { // if joystick is pushed left
+    digitalWrite(HBRIDGE_LEFT_EN, LOW); // shut off H-Bridge
+    digitalWrite(HBRIDGE_LEFT1, HIGH);
+    digitalWrite(HBRIDGE_LEFT2, LOW);
+    analogWrite(HBRIDGE_LEFT_EN, velocity); // turn on H-Bridge
+  } else if (x <= (127.5 - deadzone)) { // if joystick is pushed left
     velocity = map(x, 0, (127.5 - deadzone), 255, 0);
     
-    digitalWrite(BRIDGE1_EN12, LOW); // shut off H-Bridge
-    digitalWrite(BRIDGE1_LEFT1, LOW);
-    digitalWrite(BRIDGE1_LEFT2, HIGH);
-    analogWrite(BRIDGE1_EN12, velocity); // turn on H-Bridge
+    digitalWrite(HBRIDGE_LEFT_EN, LOW); // shut off H-Bridge
+    digitalWrite(HBRIDGE_LEFT1, LOW);
+    digitalWrite(HBRIDGE_LEFT2, HIGH);
+    analogWrite(HBRIDGE_LEFT_EN, velocity); // turn on H-Bridge
+  }
+
+  
+  // Right motor: controlled by Y-axis position
+  
+  if (y > (127.5 - deadzone) && y < (127.5 + deadzone)) { // if joystick is near center
+    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // stop motor
+  }
+  else if (y >= (127.5 + deadzone)) { // if joystick is pushed up (make sure up = higher #s)
+    velocity = map(y, (127.5 + deadzone), 255, 0, 255);
+
+    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // shut off H-Bridge
+    digitalWrite(HBRIDGE_RIGHT1, HIGH);
+    digitalWrite(HBRIDGE_RIGHT2, LOW);
+    analogWrite(HBRIDGE_RIGHT_EN, velocity); // turn on H-Bridge
+  } else if (y <= (127.5 - deadzone)) { // if joystick is pushed down
+    velocity = map(y, 0, (127.5 - deadzone), 255, 0);
+    
+    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // shut off H-Bridge
+    digitalWrite(HBRIDGE_RIGHT1, LOW);
+    digitalWrite(HBRIDGE_RIGHT2, HIGH);
+    analogWrite(HBRIDGE_RIGHT_EN, velocity); // turn on H-Bridge
   }
 }
 
