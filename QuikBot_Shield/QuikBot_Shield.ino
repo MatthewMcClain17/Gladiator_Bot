@@ -15,8 +15,8 @@ SoftwareSerial Bluetooth(7, 8);
 // USER SETTINGS
 // Select the variable values that best suit your needs. (Ranges in parenthesis)
 
-const int deadzone = 10;
-// Sets the range of joystick values treated as neutral. (0 - 255)
+const int deadzone = 10; // Sets the range of joystick values treated as neutral. (0 - 255)
+const int MAX_SPEED = 255; // Sets the maximum power to send to the motors. (0-255)
 
 // PINS
 // Joystick (delete when controller sketch is complete)
@@ -57,9 +57,9 @@ byte lastRead[10];
  */
 
 void setup() {
-  /* Joystick (delete when controller sketch is complete)
+  // Joystick (delete when controller sketch is complete)
   pinMode(xPin, INPUT);
-  pinMode(yPin, OUTPUT); */
+  pinMode(yPin, INPUT);
   
   // H-Bridge
   pinMode(HBRIDGE_LEFT_EN, OUTPUT);
@@ -76,17 +76,20 @@ void setup() {
 }
 
 void loop() {
-  // change below to 10
+  /* change below to 10
   if (Bluetooth.available() >= 11) { // if any incoming serial data is recieved
     parseBluetoothData(); // decode the message and put the values in lastRead[]
   }
-
-  bluetoothTest();
+  */
+  //bluetoothTest();
   
   //delay(50); // Delay to slow transmission/action speed (possibly uneccessary
 
+  determineVelocity(map(analogRead(xPin), 0, 1023, 0, 255), map(analogRead(yPin), 0, 1023, 0, 255));
   //updateDrivingMotors(lastRead[1], lastRead[2]);
-  updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), map(analogRead(yPin), 0, 1023, 0, 255));
+  //updateLeftMotor(map(analogRead(xPin), 0, 1023, 0, 255));
+  //updateRightMotor(map(analogRead(yPin), 0, 1023, 0, 255));
+  //updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), map(analogRead(yPin), 0, 1023, 0, 255));
 }
 
 // FUNCTIONS
@@ -96,9 +99,162 @@ void updateDrivingMotors(int x, int y) {
   // to do: make the Y value do something
   // to do: write a code that could actually make something move using this
   // as a framework
+
+  // Attach positive motor wires to front of shield (and H-Bridge)
+
+  Serial.print(x);
+  Serial.print(", ");
+  Serial.println(y);
   
   // Left motor: controlled by X-axis position
   
+  if (x > (127.5 - deadzone) && x < (127.5 + deadzone)) { // if joystick is near center
+    digitalWrite(HBRIDGE_LEFT_EN, LOW); // stop motor
+  } else if (x >= (127.5 + deadzone)) { // if joystick is pushed right
+    velocity = map(x, (127.5 + deadzone), 255, 0, 255);
+    // make motor go forwards
+    digitalWrite(HBRIDGE_LEFT_EN, LOW); // shut off H-Bridge
+    digitalWrite(HBRIDGE_LEFT1, LOW);
+    digitalWrite(HBRIDGE_LEFT2, HIGH);
+    analogWrite(HBRIDGE_LEFT_EN, velocity); // turn on H-Bridge
+  } else if (x <= (127.5 - deadzone)) { // if joystick is pushed left
+    velocity = map(x, 0, (127.5 - deadzone), 255, 0);
+    // make motor go backwards
+    digitalWrite(HBRIDGE_LEFT_EN, LOW); // shut off H-Bridge
+    digitalWrite(HBRIDGE_LEFT1, HIGH);
+    digitalWrite(HBRIDGE_LEFT2, LOW);
+    analogWrite(HBRIDGE_LEFT_EN, velocity); // turn on H-Bridge
+  }
+
+  
+  // Right motor: controlled by Y-axis position
+  
+  if (y > (127.5 - deadzone) && y < (127.5 + deadzone)) { // if joystick is near center
+    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // stop motor
+  } else if (y >= (127.5 + deadzone)) { // if joystick is pushed down
+    velocity = map(y, 0, (127.5 - deadzone), 255, 0);
+    // make motor go forwards
+    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // shut off H-Bridge
+    digitalWrite(HBRIDGE_RIGHT1, LOW);
+    digitalWrite(HBRIDGE_RIGHT2, HIGH);
+    analogWrite(HBRIDGE_RIGHT_EN, velocity); // turn on H-Bridge
+  } else if (y <= (127.5 - deadzone)) { // if joystick is pushed up (lower #s)
+    velocity = map(y, (127.5 + deadzone), 255, 0, 255);
+    // make motor go backwards
+    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // shut off H-Bridge
+    digitalWrite(HBRIDGE_RIGHT1, HIGH);
+    digitalWrite(HBRIDGE_RIGHT2, LOW);
+    analogWrite(HBRIDGE_RIGHT_EN, velocity); // turn on H-Bridge
+  }
+}
+
+void determineVelocity(byte JOYSTICK_X, byte JOYSTICK_Y) {
+  // Determines the appropriate velocities for each motor based on the position
+  // of the joysticks on the controller. Uses the Y axis of the left joystick
+  // and the X axis of the right joystick.
+  // Note: Positive values indicate forward and right directions, negative
+  // values indicate backward and left directions.
+
+  // Determine raw speed
+  
+  int RAW_SPEED; // stores the basic speed and forwards/backwards direction
+
+  if (JOYSTICK_Y > (127.5 - deadzone) && JOYSTICK_Y < (127.5 + deadzone)) { // if joystick is near center
+    RAW_SPEED = 0;
+  } else if (JOYSTICK_Y >= (127.5 + deadzone)) { // if joystick is pushed down
+    RAW_SPEED = map(JOYSTICK_Y, 0, (127.5 - deadzone), -MAX_SPEED, 0);
+  } else if (JOYSTICK_Y <= (127.5 - deadzone)) { // if joystick is pushed up (lower #s)
+    RAW_SPEED = map(JOYSTICK_Y, (127.5 + deadzone), 255, 0, MAX_SPEED);
+  }
+  
+  // Determine turning magnitude
+
+  float TURNING_MAGNITUDE; // stores the basic turning percentage and direction
+
+  if (JOYSTICK_X > (127.5 - deadzone) && JOYSTICK_X < (127.5 + deadzone)) { // if joystick is near center
+    TURNING_MAGNITUDE = 0;
+  } else if (JOYSTICK_X >= (127.5 + deadzone)) { // if joystick is pushed right
+    TURNING_MAGNITUDE = 1 - map(JOYSTICK_X, (127.5 + deadzone), 255, 0, 1);
+  } else if (JOYSTICK_X <= (127.5 - deadzone)) { // if joystick is pushed left
+    TURNING_MAGNITUDE = -1 - map(JOYSTICK_X, 0, (127.5 - deadzone), -1, 0);
+  }
+
+  // Determine appropriate velocities for left and right motors
+  
+  int LEFT_VELOCITY; // stores the appropriate velocity for the left motor
+  int RIGHT_VELOCITY; // stores the appropriate velocity for the right motor
+
+  if (TURNING_MAGNITUDE > 0) { // if turning right
+    LEFT_VELOCITY = RAW_SPEED;
+    RIGHT_VELOCITY = RAW_SPEED * TURNING_MAGNITUDE;
+  } else if (TURNING_MAGNITUDE < 0) { // if turning left
+    LEFT_VELOCITY = RAW_SPEED * -TURNING_MAGNITUDE;
+    RIGHT_VELOCITY = RAW_SPEED;
+  }
+
+  Serial.print("Raw speed: ");
+  Serial.print(RAW_SPEED);
+  Serial.print("   Turning magnitude: ");
+  Serial.print(TURNING_MAGNITUDE);
+  Serial.print("   L and R velocities: ");
+  Serial.print(LEFT_VELOCITY);
+  Serial.print(' ');
+  Serial.println(RIGHT_VELOCITY);
+
+  updateLeftMotor(LEFT_VELOCITY);
+  updateRightMotor(RIGHT_VELOCITY);
+}
+
+void updateLeftMotor(int VELOCITY) {
+  // Sets the speed and direction of a motor attached to the left side
+  // of the H-Bridge
+
+  if (VELOCITY == 0) { // if velocity is zero
+    digitalWrite(HBRIDGE_LEFT_EN, LOW); // stop motor
+  } else if (VELOCITY > 1) { // if velocity is positive
+    digitalWrite(HBRIDGE_LEFT_EN, LOW); // turn off H-Bridge
+    
+    digitalWrite(HBRIDGE_LEFT1, LOW);
+    digitalWrite(HBRIDGE_LEFT2, HIGH);
+    
+    analogWrite(HBRIDGE_LEFT_EN, VELOCITY); // turn on H-Bridge
+  } else if (VELOCITY < 0) { // if velocity is negative
+    VELOCITY = -VELOCITY; // make velocity positive
+    
+    digitalWrite(HBRIDGE_LEFT_EN, LOW); // turn off H-Bridge
+    
+    digitalWrite(HBRIDGE_LEFT1, HIGH);
+    digitalWrite(HBRIDGE_LEFT2, LOW);
+    
+    analogWrite(HBRIDGE_LEFT_EN, VELOCITY); // turn on H-Bridge
+  }
+}
+
+void updateRightMotor(int VELOCITY) {
+  // Sets the speed and direction of a motor attached to the right side
+  // of the H-Bridge
+
+  if (VELOCITY == 0) { // if velocity is zero
+    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // stop motor
+  } else if (VELOCITY > 1) { // if velocity is positive
+    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // turn off H-Bridge
+    
+    digitalWrite(HBRIDGE_RIGHT1, LOW);
+    digitalWrite(HBRIDGE_RIGHT2, HIGH);
+    
+    analogWrite(HBRIDGE_RIGHT_EN, VELOCITY); // turn on H-Bridge
+  } else if (VELOCITY < 0) { // if velocity is negative
+    VELOCITY = -VELOCITY; // make velocity positive
+    
+    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // turn off H-Bridge
+    
+    digitalWrite(HBRIDGE_RIGHT1, HIGH);
+    digitalWrite(HBRIDGE_RIGHT2, LOW);
+    
+    analogWrite(HBRIDGE_RIGHT_EN, VELOCITY); // turn on H-Bridge
+  }
+
+  /*
   if (x > (127.5 - deadzone) && x < (127.5 + deadzone)) { // if joystick is near center
     digitalWrite(HBRIDGE_LEFT_EN, LOW); // stop motor
   }
@@ -116,29 +272,7 @@ void updateDrivingMotors(int x, int y) {
     digitalWrite(HBRIDGE_LEFT1, LOW);
     digitalWrite(HBRIDGE_LEFT2, HIGH);
     analogWrite(HBRIDGE_LEFT_EN, velocity); // turn on H-Bridge
-  }
-
-  
-  // Right motor: controlled by Y-axis position
-  
-  if (y > (127.5 - deadzone) && y < (127.5 + deadzone)) { // if joystick is near center
-    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // stop motor
-  }
-  else if (y >= (127.5 + deadzone)) { // if joystick is pushed up (make sure up = higher #s)
-    velocity = map(y, (127.5 + deadzone), 255, 0, 255);
-
-    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // shut off H-Bridge
-    digitalWrite(HBRIDGE_RIGHT1, HIGH);
-    digitalWrite(HBRIDGE_RIGHT2, LOW);
-    analogWrite(HBRIDGE_RIGHT_EN, velocity); // turn on H-Bridge
-  } else if (y <= (127.5 - deadzone)) { // if joystick is pushed down
-    velocity = map(y, 0, (127.5 - deadzone), 255, 0);
-    
-    digitalWrite(HBRIDGE_RIGHT_EN, LOW); // shut off H-Bridge
-    digitalWrite(HBRIDGE_RIGHT1, LOW);
-    digitalWrite(HBRIDGE_RIGHT2, HIGH);
-    analogWrite(HBRIDGE_RIGHT_EN, velocity); // turn on H-Bridge
-  }
+  }*/
 }
 
 void parseBluetoothData() {
