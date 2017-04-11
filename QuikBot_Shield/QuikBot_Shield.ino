@@ -85,8 +85,8 @@ void loop() {
   
   //delay(50); // Delay to slow transmission/action speed (possibly uneccessary
 
-  //updateDrivingMotors(lastRead[1], lastRead[2]);
-  updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), map(analogRead(yPin), 0, 1023, 0, 255));
+  updateDrivingMotors(lastRead[1], lastRead[2]);
+  //updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), map(analogRead(yPin), 0, 1023, 0, 255));
 }
 
 // FUNCTIONS
