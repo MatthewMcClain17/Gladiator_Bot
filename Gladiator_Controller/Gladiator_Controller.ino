@@ -1,7 +1,7 @@
 /* QUIKBOT CONTROLLER
  * 
  * Written by Matthew McClain, Oakwood Robotics Co-President
- * Copyright 2016 Oakwood Robotics
+ * Copyright 2017 Oakwood Robotics
  * Slave module address: +ADDR:2016:3:220126
  * Master module address: 
  */
@@ -19,41 +19,25 @@ SoftwareSerial Bluetooth(12, 13);
 
 const int debounce = 5; // number of milliseconds to wait when debouncing buttons
 
-byte positions[10];
+byte positions[3];
 /*  This array stores values read from the joysticks and buttons on the
  *  controller in the following format:
  *  
- *  lastRead[0]: Left Joystick button state
- *  lastRead[1]: Left Joystick X-axis position
- *  lastRead[2]: Left Joystick Y-axis position 
- *  lastRead[3]: Right Joystick button state
- *  lastRead[4]: Right Joystick X-axis position
- *  lastRead[5]: Right Joystick Y-axis position
- *  lastRead[6]: Button 1 state
- *  lastRead[7]: Button 2 state
- *  lastRead[8]: Button 3 state
- *  lastRead[9]: Button 4 state
+ *  lastRead[0]: Left Joystick Y-axis position
+ *  lastRead[1]: Button state
+ *  lastRead[2]: Right Joystick X-axis position
  *  
  *  Note that joystick position values range from 0-255 and button state values
- *  should always be either 0 (if not pressed) or 1 (if pressed).
+ *  should always be either 0 (if not pressed) or 1 (if pressed). The button is
+ *  placed between the joystick values to differentiate non-adjacent 3-digit
+ *  joystick values from adjacent 3-digit initializer values.
  */
 
 // PINS
-// Left Joystick
-const int xPinLeft = 0;
+// To do: reassign pins to match up with controller designs
 const int yPinLeft = 1;
-const int joyButtonLeft = 6; // activated by pressing down on left joystick
-
-// Right Joystick
 const int xPinRight = 2;
-const int yPinRight = 3;
-const int joyButtonRight = 7; // activated by pressing down on right joystick
-
-// Buttons
-const int button1 = 8;
-const int button2 = 9;
-const int button3 = 10;
-const int button4 = 11;
+const int button = 8;
 
 
 void setup() {
@@ -61,22 +45,9 @@ void setup() {
   // (It is technically unneccessary to declare pins as inputs because all pins
   // are inputs by default – delete any such statements to save memory)
 
-  // Left Joystick
-  pinMode(xPinLeft, INPUT);
   pinMode(yPinLeft, INPUT);
-  pinMode(joyButtonLeft, INPUT);
-  
-  // Right Joystick
   pinMode(xPinRight, INPUT);
-  pinMode(yPinRight, INPUT);
-  pinMode(joyButtonRight, INPUT);
-  
-  // Buttons
-  pinMode(button1, INPUT);
-  pinMode(button2, INPUT);
-  pinMode(button3, INPUT);
-  pinMode(button4, INPUT);
-
+  pinMode(button, INPUT);
   
   Serial.begin(9600); // Begin serial communication at a baud rate of 9600
   Bluetooth.begin(9600);
@@ -98,21 +69,11 @@ void updatePositions() {
   // Collects information from joysticks and buttons, maps the joystick values
   // so they can fit in a single byte (0-255) and writes it to positions[].
   
-  // Left joystick
-  if (pressed(joyButtonLeft) == HIGH) positions[0] = 1; else positions[0] = 0;
-  positions[1] = map(analogRead(xPinLeft), 0, 1023, 0, 255);
-  positions[2] = map(analogRead(yPinLeft), 0, 1023, 0, 255);
-
-  // Right joystick
-  if (pressed(joyButtonRight) == HIGH) positions[3] = 1; else positions[3] = 0;
-  positions[4] = map(analogRead(xPinRight), 0, 1023, 0, 255);
-  positions[5] = map(analogRead(yPinRight), 0, 1023, 0, 255);
-
-  // Buttons
-  if (pressed(button1) == HIGH) positions[6] = 1; else positions[6] = 0;
-  if (pressed(button2) == HIGH) positions[7] = 1; else positions[7] = 0;
-  if (pressed(button3) == HIGH) positions[8] = 1; else positions[8] = 0;
-  if (pressed(button4) == HIGH) positions[9] = 1; else positions[9] = 0;
+  positions[0] = map(analogRead(yPinLeft), 0, 1023, 0, 255);
+  
+  if (pressed(button) == HIGH) positions[1] = 1; else positions[1] = 0;
+  
+  positions[2] = map(analogRead(xPinRight), 0, 1023, 0, 255);
 }
 
 bool pressed(int buttonPin) { // to do: rewrite so this is for single presses
@@ -131,8 +92,8 @@ bool pressed(int buttonPin) { // to do: rewrite so this is for single presses
 // Testing functions (can be deleted to save memory)
 
 void printPositions() {
-  // Prints all ten positions[] values to the serial monitor
-  for (int i = 0; i < 10; i++) {
+  // Prints all three positions[] values to the serial monitor
+  for (int i = 0; i < 3; i++) {
     Serial.print(positions[i]);
     Serial.print(',');
   }
@@ -142,7 +103,7 @@ void printPositions() {
 void joystickTest() {
   // Prints the current analog value recieved from the joystick
   // to do: add second joystick
-  int x = analogRead(xPinLeft);
+  int x = analogRead(xPinRight);
   int y = analogRead(yPinLeft);
   Serial.print("X: ");
   Serial.println(x);
@@ -163,14 +124,17 @@ void buttonTest(int buttonPin) {
   }
 }
 
-void bluetoothTest(byte data[10]) {
-  // Writes any ten-byte array to the bluetooth serial port
+void bluetoothTest(byte data[3]) {
+  // Writes any ten-byte array to the Bluetooth serial port
   /*
   for (int i = 0; i < 10; i++) {
     data[i] = 1;
   }*/
-  Bluetooth.print('>');
-  Bluetooth.write(data, 10);
+
+  // Print header characters "]!"
+  Bluetooth.print(']');
+  Bluetooth.print('!');
+  Bluetooth.write(data, 3);
   delay(50);
 
   /*

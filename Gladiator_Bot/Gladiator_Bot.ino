@@ -1,7 +1,7 @@
 /* QUIKBOT SHIELD
  * 
  * Written by Matthew McClain, Oakwood Robotics Co-President
- * Copyright 2016 Oakwood Robotics
+ * Copyright 2017 Oakwood Robotics
  */
 
 #include <SoftwareSerial.h>
@@ -37,24 +37,21 @@ const int HBRIDGE_RIGHT2 = 4;
 int velocity;
 int motorDirection;
 
-byte lastRead[10];
+byte lastRead[3];
 /*  This array stores values from the last recieved serial transmission from the
  *  controller in the following format:
  *  
- *  lastRead[0]: Left Joystick button state
- *  lastRead[1]: Left Joystick X-axis position
- *  lastRead[2]: Left Joystick Y-axis position 
- *  lastRead[3]: Right Joystick button state
- *  lastRead[4]: Right Joystick X-axis position
- *  lastRead[5]: Right Joystick Y-axis position
- *  lastRead[6]: Button 1 state
- *  lastRead[7]: Button 2 state
- *  lastRead[8]: Button 3 state
- *  lastRead[9]: Button 4 state
+ *  lastRead[0]: Left Joystick Y-axis position
+ *  lastRead[1]: Button state
+ *  lastRead[2]: Right Joystick X-axis position
  *  
  *  Note that joystick position values range from 0-255 and button state values
- *  should always be either 0 (if not pressed) or 1 (if pressed).
+ *  should always be either 0 (if not pressed) or 1 (if pressed). The button is
+ *  placed between the joystick values to differentiate non-adjacent 3-digit
+ *  joystick values from adjacent 3-digit initializer values.
  */
+
+ byte dumpBuffer[30]; // Used to hold corrupted serial information
 
 void setup() {
   /* Joystick (delete when controller sketch is complete)
@@ -77,15 +74,15 @@ void setup() {
 
 void loop() {
   // change below to 10
-  if (Bluetooth.available() >= 11) { // if any incoming serial data is recieved
+  if (Bluetooth.available() >= 5) { // if any incoming serial data is recieved
     parseBluetoothData(); // decode the message and put the values in lastRead[]
   }
 
   bluetoothTest();
   
-  //delay(50); // Delay to slow transmission/action speed (possibly uneccessary
+  //delay(50); // Delay to slow transmission/action speed (possibly uneccessary)
 
-  updateDrivingMotors(lastRead[1], lastRead[2]);
+  updateDrivingMotors(lastRead[0], lastRead[2]);
   //updateDrivingMotors(map(analogRead(xPin), 0, 1023, 0, 255), map(analogRead(yPin), 0, 1023, 0, 255));
 }
 
@@ -143,8 +140,15 @@ void updateDrivingMotors(int x, int y) {
 
 void parseBluetoothData() {
   // Store data recieved via bluetooth in the lastRead array
-  if (Bluetooth.read() == '>') { // if header character '>' is present
-    Bluetooth.readBytesUntil('>', lastRead, 10); // Store 10 bytes in lastRead
+  if (Bluetooth.read() == ']') { // if first header character ']' is present
+    if (Bluetooth.read() == '!') { // if second header character '!' is present
+      Bluetooth.readBytes(lastRead, 3); // Store next 3 bytes in lastRead
+      // (formerly readBytesUntil())^
+    } else { // if initializer is invalid
+      Bluetooth.readBytes(dumpBuffer, Serial.available()); // dump entire serial buffer
+    }
+  } else { // if initializer is invalid
+    Bluetooth.readBytes(dumpBuffer, Serial.available()); // dump entire serial buffer
   }
 }
 
