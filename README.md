@@ -1,2 +1,2 @@
 # QuikBot
-Arduino code for use with the Oakwood Robotics QuikBot Shield and QuikBot Controller. All rights reserved.
+Arduino code for use with the Oakwood Robotics Gladiator Bot and Gladiator Bot Controller. Written by Matthew McClain. All rights reserved.
